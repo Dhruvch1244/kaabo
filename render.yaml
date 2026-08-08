@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: kaabo
+    runtime: node
+    plan: free
+    branch: claude/kabboo-local-multiplayer-game-5lcwsm
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 20.11.0

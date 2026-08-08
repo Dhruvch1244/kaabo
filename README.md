@@ -33,6 +33,36 @@ Node.js, so an iPhone can only be a *player*, not the host.
 If the host's IP address changes (e.g. they reconnect to the hotspot),
 just re-run `npm start` and re-share the new address.
 
+## Playing over the internet instead of a hotspot
+
+Nothing about the game logic requires a local network — it's just Socket.IO
+over HTTP, so it works the same way if the server happens to live in the
+cloud instead of on someone's laptop. If your group isn't in the same room,
+deploy the server once and share the public URL instead of a hotspot address:
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/dhruvch1244/kaabo/tree/claude/kabboo-local-multiplayer-game-5lcwsm)
+
+This repo includes a `render.yaml`, so Render's free tier will build and run
+it automatically — click the button, connect your GitHub account, and Render
+gives you a permanent `https://kaabo-xxxx.onrender.com` link you can send to
+anyone. Two caveats: free-tier services spin down after 15 minutes idle (the
+first request after that takes ~30s to wake back up), and since everyone now
+connects over the internet rather than a shared hotspot, the in-app address
+list on the lobby screen (which detects the *server's* local network IP) isn't
+meaningful there — just share the Render URL directly instead.
+
+## Getting a shareable link to the code itself
+
+This session's GitHub access is scoped to pushing only the
+`claude/kabboo-local-multiplayer-game-5lcwsm` branch — it can't push tags or
+create a GitHub Release. Until this is merged or you tag it yourself, the
+shareable link to the code is the branch itself:
+`https://github.com/dhruvch1244/kaabo/tree/claude/kabboo-local-multiplayer-game-5lcwsm`
+(add `.zip` via `.../archive/refs/heads/claude/kabboo-local-multiplayer-game-5lcwsm.zip`
+for a direct download). To get a proper versioned Release, either merge this
+branch into `main` and tag it from the GitHub UI (Releases → Draft a new
+release), or ask for a pull request to be opened and merged first.
+
 ## Rules
 
 Full rules are in the app itself (tap **How do I play?** on the landing
