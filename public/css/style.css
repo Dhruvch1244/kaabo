@@ -30,11 +30,12 @@
   font-size: 16px;
 }
 
-* { box-sizing: border-box; }
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
 html, body {
   height: 100%;
   margin: 0;
+  overscroll-behavior-y: none;
 }
 
 body {
@@ -47,11 +48,26 @@ body {
   min-height: 100vh;
   min-height: 100dvh;
   overflow-x: hidden;
+  overscroll-behavior-y: none;
   -webkit-tap-highlight-color: transparent;
+  touch-action: pan-y;
 }
 
 button {
   font-family: inherit;
+}
+
+/* Interactive controls: no accidental text selection, no iOS long-press
+   callout menu, and skip the old 300ms tap delay everywhere. */
+button, .card, .pile, .icon-btn, .link-btn, .back-btn {
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+input, textarea {
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 h1, h2, h3, h4 {
@@ -74,6 +90,24 @@ p { margin: 0 0 10px; color: var(--muted); }
   animation: fadeIn 0.25s ease;
 }
 .screen.active { display: flex; flex-direction: column; align-items: center; }
+/* Screens with a fixed bottom-bar need clearance so scrolled content
+   never ends up hidden underneath it. */
+.screen.has-bottom-bar { padding-bottom: 130px; }
+
+/* Primary call-to-action, pinned to the thumb-reachable zone at the
+   bottom of the viewport instead of wherever the content happens to end. */
+.bottom-bar {
+  position: fixed;
+  left: 0; right: 0; bottom: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 18px 18px calc(14px + env(safe-area-inset-bottom));
+  background: linear-gradient(180deg, transparent, var(--felt-dark) 22%);
+}
+.bottom-bar .action-bar { width: 100%; max-width: 480px; margin: 0; padding: 0; }
 
 @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
@@ -121,14 +155,15 @@ p { margin: 0 0 10px; color: var(--muted); }
   background: var(--panel-bg);
   border: 1px solid var(--panel-border);
   color: var(--cream);
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  font-size: 1.1rem;
+  width: 44px;
+  height: 44px;
+  border-radius: 13px;
+  font-size: 1.15rem;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .back-btn {
@@ -138,7 +173,12 @@ p { margin: 0 0 10px; color: var(--muted); }
   color: var(--muted);
   font-size: 1.4rem;
   cursor: pointer;
-  padding: 4px 8px 4px 0;
+  padding: 10px 12px 10px 4px;
+  margin: -10px 0 -6px -4px;
+  min-height: 44px;
+  min-width: 44px;
+  display: flex;
+  align-items: center;
 }
 
 /* ---------- landing ---------- */
@@ -514,4 +554,27 @@ input:focus { border-color: var(--gold); }
   .card { width: 78px; height: 110px; }
   .card.small { width: 54px; height: 76px; }
   .deck-stack, .discard-slot { width: 78px; height: 110px; }
+}
+
+/* Phone in landscape (or any very short viewport): the app is still
+   meant to be played one-handed, so compress vertical rhythm instead
+   of forcing a scroll to reach the action bar. */
+@media (max-height: 500px) {
+  .screen { padding-top: 14px; padding-bottom: 100px; }
+  .screen.has-bottom-bar { padding-bottom: 100px; }
+  .game-wrap { gap: 10px; }
+  .status-bar { padding: 8px 14px; }
+  .status-headline { font-size: 0.92rem; }
+  .status-sub { font-size: 0.76rem; margin-top: 0; }
+  .opponents-row { padding: 2px 2px 6px; }
+  .opponent-card { padding: 6px 8px; min-width: 112px; }
+  .self-area { padding: 10px 14px; }
+  .self-header { margin-bottom: 6px; }
+  .card { width: 52px; height: 74px; }
+  .card.small { width: 36px; height: 50px; }
+  .deck-stack, .discard-slot { width: 52px; height: 74px; }
+  .bottom-bar { padding-top: 10px; }
+  .landing-wrap, .peek-wrap, .reveal-wrap { gap: 14px; }
+  .brand-mark { width: 60px; height: 60px; font-size: 1.9rem; }
+  .brand h1 { font-size: 1.8rem; }
 }

@@ -171,6 +171,26 @@
 
   $('#btn-entry-back').onclick = () => showScreen('screen-landing');
 
+  // Mobile keyboards don't always honor autocapitalize consistently -
+  // force it live so what you see matches what gets submitted.
+  $('#input-room-code').addEventListener('input', (e) => {
+    const pos = e.target.selectionStart;
+    e.target.value = e.target.value.toUpperCase();
+    e.target.setSelectionRange(pos, pos);
+  });
+
+  // Enter key on either entry field submits, so the mobile "Go"/"Next"
+  // key on the keyboard actually does something useful.
+  $('#input-name').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      if (entryMode === 'join') $('#input-room-code').focus();
+      else $('#btn-entry-submit').click();
+    }
+  });
+  $('#input-room-code').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') $('#btn-entry-submit').click();
+  });
+
   $('#btn-entry-submit').onclick = () => {
     const name = $('#input-name').value.trim();
     if (!name) { $('#entry-error').textContent = 'Enter your name.'; return; }

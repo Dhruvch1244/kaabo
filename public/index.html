@@ -35,11 +35,11 @@
     <h2 id="entry-title">Host a Game</h2>
     <label class="field">
       <span>Your name</span>
-      <input type="text" id="input-name" maxlength="16" placeholder="e.g. Dhruv" autocomplete="off" />
+      <input type="text" id="input-name" maxlength="16" placeholder="e.g. Dhruv" autocomplete="off" autocapitalize="words" autocorrect="off" enterkeyhint="next" />
     </label>
     <label class="field" id="field-room-code">
       <span>Room code</span>
-      <input type="text" id="input-room-code" maxlength="4" placeholder="ABCD" autocomplete="off" style="text-transform:uppercase" />
+      <input type="text" id="input-room-code" maxlength="4" placeholder="ABCD" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" inputmode="text" enterkeyhint="go" style="text-transform:uppercase" />
     </label>
     <button class="btn btn-primary btn-lg" id="btn-entry-submit">Continue</button>
     <p class="error-text" id="entry-error"></p>
@@ -47,7 +47,7 @@
 </section>
 
 <!-- LOBBY -->
-<section class="screen" id="screen-lobby">
+<section class="screen has-bottom-bar" id="screen-lobby">
   <div class="lobby-wrap">
     <div class="lobby-header">
       <div>
@@ -72,28 +72,31 @@
       <p class="panel-title">Game settings</p>
       <label class="field-inline">
         <span>Target score (ends the game)</span>
-        <input type="number" id="input-target-score" min="20" max="300" step="5" value="100" />
+        <input type="number" id="input-target-score" min="20" max="300" step="5" value="100" inputmode="numeric" />
       </label>
     </div>
-
+  </div>
+  <div class="bottom-bar">
     <button class="btn btn-primary btn-lg" id="btn-start-game">Start Game</button>
     <p class="hint" id="lobby-waiting-text">Waiting for the host to start&hellip;</p>
   </div>
 </section>
 
 <!-- PEEK -->
-<section class="screen" id="screen-peek">
+<section class="screen has-bottom-bar" id="screen-peek">
   <div class="peek-wrap">
     <h2>Round <span id="peek-round">1</span> &mdash; memorize your cards</h2>
     <p class="hint">Your bottom two cards are revealed to you only. Remember them &mdash; they'll flip face down once everyone's ready.</p>
     <div class="grid grid-self" id="peek-grid"></div>
+  </div>
+  <div class="bottom-bar">
     <button class="btn btn-primary btn-lg" id="btn-ready">I'm Ready</button>
     <p class="hint" id="peek-ready-count"></p>
   </div>
 </section>
 
 <!-- GAME -->
-<section class="screen" id="screen-game">
+<section class="screen has-bottom-bar" id="screen-game">
   <div class="game-wrap">
     <header class="game-top-bar">
       <button class="icon-btn" id="btn-open-log" title="Game log">&#9776;</button>
@@ -138,7 +141,9 @@
       <div class="grid grid-self" id="self-grid"></div>
       <p class="self-hint hidden" id="self-hint"></p>
     </div>
+  </div>
 
+  <div class="bottom-bar">
     <div class="action-bar" id="action-bar"></div>
   </div>
 
@@ -168,7 +173,7 @@
 </section>
 
 <!-- REVEAL -->
-<section class="screen" id="screen-reveal">
+<section class="screen has-bottom-bar" id="screen-reveal">
   <div class="reveal-wrap">
     <h2 id="reveal-title">Round Complete</h2>
     <div class="reveal-grids" id="reveal-grids"></div>
@@ -176,13 +181,15 @@
       <p class="panel-title">Standings</p>
       <ul class="score-list" id="reveal-score-list"></ul>
     </div>
+  </div>
+  <div class="bottom-bar">
     <button class="btn btn-primary btn-lg" id="btn-next-round">Next Round</button>
     <p class="hint" id="reveal-waiting-text">Waiting for the host&hellip;</p>
   </div>
 </section>
 
 <!-- GAME OVER -->
-<section class="screen" id="screen-gameover">
+<section class="screen has-bottom-bar" id="screen-gameover">
   <div class="reveal-wrap">
     <div class="winner-banner">
       <p class="eyebrow">Winner</p>
@@ -192,6 +199,8 @@
       <p class="panel-title">Final Standings</p>
       <ul class="score-list" id="final-score-list"></ul>
     </div>
+  </div>
+  <div class="bottom-bar">
     <button class="btn btn-primary btn-lg" id="btn-new-game">Back to Lobby</button>
     <p class="hint" id="gameover-waiting-text"></p>
   </div>
