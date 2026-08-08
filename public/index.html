@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+<meta name="theme-color" content="#0b3d2e" />
+<title>Kaabo</title>
+<link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+
+<div id="toasts" class="toasts"></div>
+
+<!-- LANDING -->
+<section class="screen active" id="screen-landing">
+  <div class="landing-wrap">
+    <div class="brand">
+      <div class="brand-mark">K</div>
+      <h1>Kaabo</h1>
+      <p class="tagline">The card game of memory, nerve, and a little bit of luck.</p>
+    </div>
+    <div class="landing-actions">
+      <button class="btn btn-primary btn-lg" id="btn-go-host">Host a Game</button>
+      <button class="btn btn-ghost btn-lg" id="btn-go-join">Join a Game</button>
+    </div>
+    <button class="link-btn" id="btn-show-rules">How do I play?</button>
+    <p class="hint" id="landing-hint"></p>
+  </div>
+</section>
+
+<!-- NAME / JOIN ENTRY -->
+<section class="screen" id="screen-entry">
+  <div class="card-panel entry-panel">
+    <button class="back-btn" id="btn-entry-back">&larr;</button>
+    <h2 id="entry-title">Host a Game</h2>
+    <label class="field">
+      <span>Your name</span>
+      <input type="text" id="input-name" maxlength="16" placeholder="e.g. Dhruv" autocomplete="off" />
+    </label>
+    <label class="field" id="field-room-code">
+      <span>Room code</span>
+      <input type="text" id="input-room-code" maxlength="4" placeholder="ABCD" autocomplete="off" style="text-transform:uppercase" />
+    </label>
+    <button class="btn btn-primary btn-lg" id="btn-entry-submit">Continue</button>
+    <p class="error-text" id="entry-error"></p>
+  </div>
+</section>
+
+<!-- LOBBY -->
+<section class="screen" id="screen-lobby">
+  <div class="lobby-wrap">
+    <div class="lobby-header">
+      <div>
+        <p class="eyebrow">Room Code</p>
+        <h1 class="room-code" id="lobby-room-code">----</h1>
+      </div>
+      <button class="link-btn" id="btn-lobby-rules">Rules</button>
+    </div>
+
+    <div class="card-panel" id="lobby-join-info">
+      <p class="panel-title">Everyone joins from the same WiFi / hotspot</p>
+      <div id="lobby-addresses" class="address-list"></div>
+      <p class="hint">Open one of these in a phone browser, tap <b>Join a Game</b>, and enter the room code above.</p>
+    </div>
+
+    <div class="card-panel">
+      <p class="panel-title">Players (<span id="lobby-player-count">0</span>)</p>
+      <ul class="player-list" id="lobby-player-list"></ul>
+    </div>
+
+    <div class="card-panel" id="lobby-host-settings">
+      <p class="panel-title">Game settings</p>
+      <label class="field-inline">
+        <span>Target score (ends the game)</span>
+        <input type="number" id="input-target-score" min="20" max="300" step="5" value="100" />
+      </label>
+    </div>
+
+    <button class="btn btn-primary btn-lg" id="btn-start-game">Start Game</button>
+    <p class="hint" id="lobby-waiting-text">Waiting for the host to start&hellip;</p>
+  </div>
+</section>
+
+<!-- PEEK -->
+<section class="screen" id="screen-peek">
+  <div class="peek-wrap">
+    <h2>Round <span id="peek-round">1</span> &mdash; memorize your cards</h2>
+    <p class="hint">Your bottom two cards are revealed to you only. Remember them &mdash; they'll flip face down once everyone's ready.</p>
+    <div class="grid grid-self" id="peek-grid"></div>
+    <button class="btn btn-primary btn-lg" id="btn-ready">I'm Ready</button>
+    <p class="hint" id="peek-ready-count"></p>
+  </div>
+</section>
+
+<!-- GAME -->
+<section class="screen" id="screen-game">
+  <div class="game-wrap">
+    <header class="game-top-bar">
+      <button class="icon-btn" id="btn-open-log">&#9776;</button>
+      <div class="round-pill">Round <span id="game-round">1</span></div>
+      <button class="icon-btn" id="btn-open-scores">&#9873;</button>
+    </header>
+
+    <div class="opponents-row" id="opponents-row"></div>
+
+    <div class="table-center">
+      <div class="pile-group">
+        <button class="pile draw-pile" id="pile-draw" title="Draw pile">
+          <span class="pile-count" id="draw-count">0</span>
+          <span class="pile-label">Draw</span>
+        </button>
+        <button class="pile discard-pile" id="pile-discard" title="Discard pile">
+          <div id="discard-card-holder"></div>
+          <span class="pile-label">Discard</span>
+        </button>
+      </div>
+      <div class="turn-banner" id="turn-banner">Waiting&hellip;</div>
+    </div>
+
+    <div class="self-area">
+      <div class="self-header">
+        <span class="self-name" id="self-name">You</span>
+        <span class="self-score">Score: <span id="self-score">0</span></span>
+      </div>
+      <div class="grid grid-self" id="self-grid"></div>
+    </div>
+
+    <div class="action-bar" id="action-bar"></div>
+  </div>
+
+  <!-- slap button -->
+  <button class="slap-fab hidden" id="btn-slap-mode">SLAP!</button>
+
+  <!-- side panels -->
+  <div class="panel-overlay hidden" id="log-panel">
+    <div class="panel-sheet">
+      <div class="panel-sheet-header"><h3>Game Log</h3><button class="icon-btn" id="btn-close-log">&times;</button></div>
+      <ul class="log-list" id="log-list"></ul>
+    </div>
+  </div>
+  <div class="panel-overlay hidden" id="scores-panel">
+    <div class="panel-sheet">
+      <div class="panel-sheet-header"><h3>Scoreboard</h3><button class="icon-btn" id="btn-close-scores">&times;</button></div>
+      <ul class="score-list" id="score-list"></ul>
+    </div>
+  </div>
+
+  <!-- power resolution modal -->
+  <div class="modal-overlay hidden" id="power-modal">
+    <div class="modal-sheet" id="power-modal-body"></div>
+  </div>
+
+  <!-- peek result toast-modal -->
+  <div class="modal-overlay hidden" id="peek-result-modal">
+    <div class="modal-sheet" id="peek-result-body"></div>
+  </div>
+</section>
+
+<!-- REVEAL -->
+<section class="screen" id="screen-reveal">
+  <div class="reveal-wrap">
+    <h2 id="reveal-title">Round Complete</h2>
+    <div class="reveal-grids" id="reveal-grids"></div>
+    <div class="card-panel">
+      <p class="panel-title">Standings</p>
+      <ul class="score-list" id="reveal-score-list"></ul>
+    </div>
+    <button class="btn btn-primary btn-lg" id="btn-next-round">Next Round</button>
+    <p class="hint" id="reveal-waiting-text">Waiting for the host&hellip;</p>
+  </div>
+</section>
+
+<!-- GAME OVER -->
+<section class="screen" id="screen-gameover">
+  <div class="reveal-wrap">
+    <div class="winner-banner">
+      <p class="eyebrow">Winner</p>
+      <h1 id="winner-name">-</h1>
+    </div>
+    <div class="card-panel">
+      <p class="panel-title">Final Standings</p>
+      <ul class="score-list" id="final-score-list"></ul>
+    </div>
+    <button class="btn btn-primary btn-lg" id="btn-new-game">Back to Lobby</button>
+    <p class="hint" id="gameover-waiting-text"></p>
+  </div>
+</section>
+
+<!-- RULES MODAL -->
+<div class="modal-overlay hidden" id="rules-modal">
+  <div class="modal-sheet rules-sheet">
+    <div class="panel-sheet-header"><h3>How to Play Kaabo</h3><button class="icon-btn" id="btn-close-rules">&times;</button></div>
+    <div class="rules-body">
+      <h4>Goal</h4>
+      <p>Have the <b>lowest total</b> in your 4 face-down cards. Ace = 1, number cards = face value, J = 11, Q = 12, black King = 13, <b>red King = &minus;1</b>.</p>
+      <h4>Setup</h4>
+      <p>Everyone gets 4 cards in a row, face down. You may look at your own <b>bottom two</b> only, once, at the start of the round. Remember them!</p>
+      <h4>On your turn</h4>
+      <p>Draw from the <b>draw pile</b> or the <b>discard pile</b>.</p>
+      <ul>
+        <li>From the draw pile: swap it into one of your cards (old card goes to discard face up), <i>or</i> discard it. If it's a power card and you discard it, you may use its power.</li>
+        <li>From the discard pile: you must swap it into one of your cards.</li>
+      </ul>
+      <h4>Powers (only when drawn from the pile and discarded)</h4>
+      <ul>
+        <li><b>7 or 8</b> &mdash; Peek at one of your own cards.</li>
+        <li><b>9 or 10</b> &mdash; Peek at one opponent's card.</li>
+        <li><b>J or Q</b> &mdash; Blind swap: swap any two cards on the table without looking.</li>
+        <li><b>King</b> &mdash; Look at any two cards, then choose whether to swap them.</li>
+      </ul>
+      <h4>Slapping</h4>
+      <p>Any time a card lands on the discard pile, anyone who thinks they hold a matching rank can slap it in &mdash; even out of turn. Guess right and that card is gone (fewer points!). Guess wrong and you pick up a penalty card.</p>
+      <h4>Calling Kaabo</h4>
+      <p>Instead of drawing, call <b>Kaabo</b> to end the round. Everyone else gets exactly one more turn, then all cards are revealed. If you don't end up with the strictly lowest score, you take a +10 penalty.</p>
+      <h4>Winning</h4>
+      <p>Scores add up across rounds. First to reach the target score has the <i>worst</i> total &mdash; the game ends and whoever has the <b>lowest</b> cumulative score wins.</p>
+    </div>
+  </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script src="/js/app.js"></script>
+</body>
+</html>
