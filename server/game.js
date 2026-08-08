@@ -311,32 +311,32 @@ class Room {
     this.advanceTurn();
   }
 
-  usePowerKingSelect(playerId, a, b) {
-    this.assertPower(playerId, 'king');
+  usePowerLookSwapSelect(playerId, a, b) {
+    this.assertPower(playerId, 'look-swap');
     const { pa, pb } = this.resolveSwapTargets(a, b);
     const acting = this.players.get(playerId);
     this.pendingPower.stage = 1;
     this.pendingPower.targets = [a, b];
     this.io.to(acting.socketId).emit('peek-result', {
-      title: 'King power - decide whether to swap',
+      title: 'Look & Swap - decide whether to swap',
       cards: [
         { owner: pa.name, card: publicCard(pa.grid[a.slot]) },
         { owner: pb.name, card: publicCard(pb.grid[b.slot]) },
       ],
-      awaitingKingDecision: true,
+      awaitingSwapDecision: true,
     });
     this.broadcast();
   }
 
-  usePowerKingDecide(playerId, doSwap) {
+  usePowerLookSwapDecide(playerId, doSwap) {
     if (
       this.turnState !== 'resolving-power' ||
       !this.pendingPower ||
       this.pendingPower.playerId !== playerId ||
-      this.pendingPower.type !== 'king' ||
+      this.pendingPower.type !== 'look-swap' ||
       this.pendingPower.stage !== 1
     ) {
-      throw new Error('No king decision pending.');
+      throw new Error('No swap decision pending.');
     }
     const [a, b] = this.pendingPower.targets;
     if (doSwap) {
@@ -346,9 +346,9 @@ class Room {
       pb.grid[b.slot] = tmp;
       pa.knownSlots.delete(a.slot);
       pb.knownSlots.delete(b.slot);
-      this.addLog(`${this.players.get(playerId).name} used King to swap two cards.`);
+      this.addLog(`${this.players.get(playerId).name} looked at two cards and swapped them.`);
     } else {
-      this.addLog(`${this.players.get(playerId).name} used King and chose not to swap.`);
+      this.addLog(`${this.players.get(playerId).name} looked at two cards and chose not to swap.`);
     }
     this.pendingPower = null;
     this.turnState = 'idle';

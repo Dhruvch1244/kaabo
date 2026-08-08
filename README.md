@@ -76,8 +76,8 @@ screen, or **Rules** from the lobby). Summary:
   requires a swap).
 - If you discard a card straight from a draw-pile draw and it has a power,
   you may use it: **7/8** peek your own card, **9/10** peek an opponent's
-  card, **J/Q** blind-swap any two cards, **King** look at two cards then
-  choose whether to swap them.
+  card, **J** blind-swaps any two cards without looking, **Q or King** look
+  at any two cards then choose whether to swap them.
 - Anytime a card lands on the discard pile, anyone can try to **slap** a
   matching rank from their own row onto it, even out of turn. Right guess =
   one fewer card. Wrong guess = a penalty card.

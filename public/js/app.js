@@ -80,7 +80,7 @@
   let latest = null;
   let lastPhase = null;
   let lobbyInfoLoaded = false;
-  let power = { mode: null, a: null, b: null }; // local staging for blind-swap / king target picking
+  let power = { mode: null, a: null, b: null }; // local staging for blind-swap / look-swap target picking
 
   function myPlayer(state) {
     return state.players.find((p) => p.id === state.you);
@@ -124,11 +124,11 @@
     body.appendChild(row);
 
     const actions = el('div', 'modal-actions');
-    if (p.awaitingKingDecision) {
+    if (p.awaitingSwapDecision) {
       const yes = el('button', 'btn btn-primary', [document.createTextNode('Swap them')]);
       const no = el('button', 'btn btn-ghost', [document.createTextNode("Don't swap")]);
-      yes.onclick = () => { socket.emit('power-king-decide', { swap: true }); closeModal('peek-result-modal'); };
-      no.onclick = () => { socket.emit('power-king-decide', { swap: false }); closeModal('peek-result-modal'); };
+      yes.onclick = () => { socket.emit('power-look-swap-decide', { swap: true }); closeModal('peek-result-modal'); };
+      no.onclick = () => { socket.emit('power-look-swap-decide', { swap: false }); closeModal('peek-result-modal'); };
       actions.appendChild(no);
       actions.appendChild(yes);
     } else {
@@ -275,7 +275,6 @@
   $('#btn-close-log').onclick = () => closePanel('log-panel');
   $('#btn-open-scores').onclick = () => { renderScoreList('#score-list', latest); openPanel('scores-panel'); };
   $('#btn-close-scores').onclick = () => closePanel('scores-panel');
-  $('#btn-slap-mode').onclick = () => toast('Tap one of your own cards below to slap it!');
 
   function openPanel(id) { $(`#${id}`).classList.remove('hidden'); }
   function closePanel(id) { $(`#${id}`).classList.add('hidden'); }
@@ -313,21 +312,31 @@
     }
   }
 
+  const POWER_LABELS = {
+    'peek-self': 'Peek at your own card',
+    'peek-opponent': "Peek at an opponent's card",
+    'blind-swap': 'Blind swap two cards',
+    'look-swap': 'Look & Swap two cards',
+  };
+
   function renderGame(state) {
     $('#game-round').textContent = state.round;
     const me_ = myPlayer(state);
     const isMyTurn = state.currentTurn === state.you;
+    const iAmSlapping = state.slapWindowActive;
 
     // opponents
     const row = $('#opponents-row');
     row.innerHTML = '';
     state.players.filter((p) => p.id !== state.you).forEach((p) => {
-      const card = el('div', `opponent-card ${p.id === state.currentTurn ? 'active-turn' : ''}`);
+      const isTurn = p.id === state.currentTurn;
+      const card = el('div', `opponent-card ${isTurn ? 'active-turn' : ''}`);
       const header = el('div', 'opponent-header');
       const dot = el('span', 'dot');
       dot.style.background = p.color;
       header.appendChild(dot);
       header.appendChild(el('span', 'opponent-name', [document.createTextNode(p.name + (p.connected ? '' : ' (off)'))]));
+      if (isTurn) header.appendChild(el('span', 'opponent-turn-badge', [document.createTextNode('Turn')]));
       header.appendChild(el('span', 'opponent-score', [document.createTextNode(String(p.score))]));
       card.appendChild(header);
       const g = el('div', 'opponent-grid');
@@ -341,50 +350,101 @@
     discardHolder.innerHTML = '';
     discardHolder.appendChild(faceUpCardEl(state.discardTop));
     $('#draw-count').textContent = state.drawPileCount;
+    const canDraw = isMyTurn && state.turnState === 'idle';
+    $('#pile-draw').classList.toggle('active-pile', canDraw);
+    $('#pile-discard').classList.toggle('active-pile', canDraw && !!state.discardTop);
 
-    // turn banner
-    const banner = $('#turn-banner');
-    let bannerText = '';
-    if (state.turnState === 'resolving-power' && state.power) {
+    // drawn card preview
+    const drawnPreview = $('#drawn-preview');
+    if (isMyTurn && state.turnState === 'drawn' && state.drawnCard) {
+      drawnPreview.classList.remove('hidden');
+      const holder = $('#drawn-preview-card');
+      holder.innerHTML = '';
+      holder.appendChild(faceUpCardEl(state.drawnCard));
+    } else {
+      drawnPreview.classList.add('hidden');
+    }
+
+    // ---- status bar: single, unambiguous "what do I do right now" ----
+    const statusBar = $('#status-bar');
+    const headlineEl = $('#status-headline');
+    const subEl = $('#status-sub');
+    let headline = '';
+    let sub = '';
+    let stateClass = 'state-waiting';
+    const caboNote = (extra) => {
+      if (!state.caboCallerId) return extra;
+      const caller = state.players.find((p) => p.id === state.caboCallerId);
+      const who = caller.id === state.you ? 'You' : caller.name;
+      return `${extra ? extra + ' • ' : ''}${who} called Kaabo - final round!`;
+    };
+
+    if (iAmSlapping) {
+      headline = 'Slap Window Open!';
+      sub = 'Anyone with a matching card can tap it in their row below - be quick.';
+      stateClass = 'state-slap';
+    } else if (state.turnState === 'resolving-power' && state.power) {
       const actor = state.players.find((p) => p.id === state.power.playerId);
-      bannerText = state.power.mine ? 'Resolve your power below' : `${actor.name} is using a power...`;
-    } else if (isMyTurn) {
-      bannerText = state.turnState === 'drawn'
-        ? (state.drawnFrom === 'discard' ? 'Tap a card to swap in your discard pick' : 'Swap it in, or discard it')
-        : 'Your turn - draw a card';
+      if (state.power.mine) {
+        headline = POWER_LABELS[state.power.type] || 'Resolve your power';
+        sub = state.power.type === 'look-swap' && state.power.stage === 1
+          ? 'Check the popup to decide.'
+          : 'Choose from the cards below.';
+        stateClass = 'state-power';
+      } else {
+        headline = `${actor.name} is using a power`;
+        sub = 'Hang tight...';
+      }
+    } else if (isMyTurn && state.turnState === 'idle') {
+      headline = 'Your Turn';
+      sub = caboNote('Tap the Draw Pile or the Discard Pile below.');
+      stateClass = 'state-your-turn';
+    } else if (isMyTurn && state.turnState === 'drawn') {
+      if (state.drawnFrom === 'discard') {
+        headline = 'Must Swap It In';
+        sub = 'Tap one of your cards below to place it (no discarding this one).';
+      } else {
+        headline = 'You Drew a Card';
+        sub = 'Tap one of your cards to swap it in, or tap Discard It below.';
+      }
+      stateClass = 'state-decide';
     } else {
       const actor = state.players.find((p) => p.id === state.currentTurn);
-      bannerText = actor ? `${actor.name}'s turn` : '';
+      headline = actor ? `${actor.name}'s Turn` : 'Waiting...';
+      sub = actor && !actor.connected
+        ? `${actor.name} is disconnected - their turn will be skipped shortly.`
+        : 'Drawing or deciding what to do...';
+      sub = caboNote(sub);
     }
-    if (state.caboCallerId) {
-      const caller = state.players.find((p) => p.id === state.caboCallerId);
-      bannerText = `Kaabo called by ${caller.name}! ${bannerText}`;
-    }
-    banner.textContent = bannerText;
+    headlineEl.textContent = headline;
+    subEl.textContent = sub;
+    statusBar.className = `status-bar ${stateClass}`;
 
     // self area
     $('#self-name').textContent = me_.name + ' (You)';
     $('#self-score').textContent = me_.score;
+    const selfArea = $('#self-area');
+    selfArea.classList.toggle('slap-glow', iAmSlapping);
+    selfArea.classList.toggle('my-turn-glow', !iAmSlapping && isMyTurn);
     const grid = $('#self-grid');
     grid.innerHTML = '';
+    const swapMode = isMyTurn && state.turnState === 'drawn';
     me_.grid.forEach((c, idx) => {
-      const tappable = state.slapWindowActive || (isMyTurn && state.turnState === 'drawn');
-      const cardNode = cardEl(c, { tappable, selected: tappable, extraClass: state.slapWindowActive ? 'highlight-turn' : '' });
+      const tappable = iAmSlapping || swapMode;
+      const extraClass = iAmSlapping ? 'slap-target' : (swapMode ? 'swap-target' : '');
+      const cardNode = cardEl(c, { tappable, extraClass });
       cardNode.onclick = () => onSelfCardTap(state, idx);
       grid.appendChild(cardNode);
     });
-
-    // drawn card preview, appended into turn banner area if it's mine
-    let existingPreview = $('#drawn-preview');
-    if (existingPreview) existingPreview.remove();
-    if (isMyTurn && state.turnState === 'drawn' && state.drawnCard) {
-      const preview = el('div', 'table-center', []);
-      preview.id = 'drawn-preview';
-      preview.style.marginTop = '-4px';
-      const label = el('div', 'hint', [document.createTextNode('You drew:')]);
-      preview.appendChild(label);
-      preview.appendChild(faceUpCardEl(state.drawnCard));
-      banner.insertAdjacentElement('afterend', preview);
+    const selfHint = $('#self-hint');
+    if (iAmSlapping) {
+      selfHint.textContent = 'Think you have a match? Tap it now!';
+      selfHint.classList.remove('hidden');
+    } else if (swapMode) {
+      selfHint.textContent = 'Tap a card above to swap your drawn card into that slot.';
+      selfHint.classList.remove('hidden');
+    } else {
+      selfHint.classList.add('hidden');
     }
 
     // action bar
@@ -408,16 +468,13 @@
       bar.appendChild(discardBtn);
     }
 
-    // pile draw click also works as a shortcut
+    // pile taps also work as a shortcut for the draw buttons
     $('#pile-draw').onclick = () => {
       if (isMyTurn && state.turnState === 'idle') socket.emit('draw-pile', {}, (ack) => { if (!ack.ok) toast(ack.error, 'error'); });
     };
     $('#pile-discard').onclick = () => {
       if (isMyTurn && state.turnState === 'idle') socket.emit('draw-discard', {}, (ack) => { if (!ack.ok) toast(ack.error, 'error'); });
     };
-
-    // slap fab
-    $('#btn-slap-mode').classList.toggle('hidden', !state.slapWindowActive);
 
     // power modal
     if (state.turnState === 'resolving-power' && state.power && state.power.mine) {
@@ -431,7 +488,7 @@
 
   // ---------- power resolution ----------
 
-  function slotButtonRow(state, playerFilter, onPick) {
+  function slotButtonRow(state, playerFilter, onPick, isPicked) {
     const wrap = el('div', 'target-list');
     state.players.filter(playerFilter).forEach((p) => {
       const group = el('div', 'target-group');
@@ -439,9 +496,11 @@
       const cardsRow = el('div', 'target-cards');
       p.grid.forEach((c, idx) => {
         if (!c) return;
-        const btn = cardEl(c, { size: 'small', tappable: true });
+        const picked = isPicked ? isPicked(p.id, idx) : false;
+        const btn = cardEl(c, { size: 'small', tappable: true, extraClass: picked ? 'picked' : '' });
+        const block = el('div', 'target-card-block', [btn, el('span', '', [document.createTextNode(`Slot ${idx + 1}`)])]);
         btn.onclick = () => onPick(p.id, idx);
-        cardsRow.appendChild(btn);
+        cardsRow.appendChild(block);
       });
       group.appendChild(cardsRow);
       wrap.appendChild(group);
@@ -474,9 +533,9 @@
         socket.emit('power-peek-opponent', { targetId: playerId, slot });
       }));
       body.appendChild(skipBtn());
-    } else if (type === 'blind-swap' || (type === 'king' && state.power.stage === 0)) {
-      const title = type === 'king' ? 'King: choose two cards to look at' : 'Blind swap two cards';
-      const desc = type === 'king'
+    } else if (type === 'blind-swap' || (type === 'look-swap' && state.power.stage === 0)) {
+      const title = type === 'look-swap' ? 'Look & Swap: choose two cards' : 'Blind swap two cards';
+      const desc = type === 'look-swap'
         ? "Pick any two cards on the table - you'll see both, then decide whether to swap."
         : 'Pick any two cards on the table to swap, without looking.';
       body.appendChild(el('h3', 'power-title', [document.createTextNode(title)]));
@@ -485,12 +544,13 @@
         !power.a ? 'Pick the first card.' : !power.b ? 'Pick the second card.' : 'Ready to confirm.'
       )]);
       body.appendChild(statusLine);
+      const isSameTarget = (t, playerId, slot) => t && t.playerId === playerId && t.slot === slot;
       body.appendChild(slotButtonRow(state, () => true, (playerId, slot) => {
         const target = { playerId, slot };
         if (!power.a) { power.a = target; }
-        else if (!(power.a.playerId === playerId && power.a.slot === slot) && !power.b) { power.b = target; }
+        else if (!isSameTarget(power.a, playerId, slot) && !power.b) { power.b = target; }
         renderPowerModal(state);
-      }));
+      }, (playerId, slot) => isSameTarget(power.a, playerId, slot) || isSameTarget(power.b, playerId, slot)));
       if (power.a) {
         const reset = el('button', 'btn btn-ghost', [document.createTextNode('Reset')]);
         reset.onclick = () => { power = { mode: null, a: null, b: null }; renderPowerModal(state); };
@@ -498,7 +558,7 @@
         if (power.b) {
           const confirm = el('button', 'btn btn-primary', [document.createTextNode('Confirm')]);
           confirm.onclick = () => {
-            if (type === 'king') socket.emit('power-king-select', { a: power.a, b: power.b });
+            if (type === 'look-swap') socket.emit('power-look-swap-select', { a: power.a, b: power.b });
             else socket.emit('power-blind-swap', { a: power.a, b: power.b });
             power = { mode: null, a: null, b: null };
           };
@@ -507,7 +567,7 @@
         body.appendChild(actions);
       }
       if (type === 'blind-swap') body.appendChild(skipBtn());
-    } else if (type === 'king' && state.power.stage === 1) {
+    } else if (type === 'look-swap' && state.power.stage === 1) {
       // The decide step is rendered by the peek-result modal instead, so this
       // modal would just be a redundant backdrop behind it - keep it closed.
       closeModal('power-modal');

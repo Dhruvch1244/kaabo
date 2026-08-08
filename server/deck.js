@@ -15,8 +15,8 @@ function valueOf(rank, suit) {
 function powerOf(rank) {
   if (rank === '7' || rank === '8') return 'peek-self';
   if (rank === '9' || rank === '10') return 'peek-opponent';
-  if (rank === 'J' || rank === 'Q') return 'blind-swap';
-  if (rank === 'K') return 'king';
+  if (rank === 'J') return 'blind-swap';
+  if (rank === 'Q' || rank === 'K') return 'look-swap';
   return null;
 }
 

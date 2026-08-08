@@ -96,40 +96,51 @@
 <section class="screen" id="screen-game">
   <div class="game-wrap">
     <header class="game-top-bar">
-      <button class="icon-btn" id="btn-open-log">&#9776;</button>
+      <button class="icon-btn" id="btn-open-log" title="Game log">&#9776;</button>
       <div class="round-pill">Round <span id="game-round">1</span></div>
-      <button class="icon-btn" id="btn-open-scores">&#9873;</button>
+      <button class="icon-btn" id="btn-open-scores" title="Scoreboard">&#9873;</button>
     </header>
+
+    <div class="status-bar" id="status-bar">
+      <div class="status-headline" id="status-headline">Waiting&hellip;</div>
+      <div class="status-sub" id="status-sub"></div>
+    </div>
 
     <div class="opponents-row" id="opponents-row"></div>
 
     <div class="table-center">
       <div class="pile-group">
         <button class="pile draw-pile" id="pile-draw" title="Draw pile">
-          <span class="pile-count" id="draw-count">0</span>
-          <span class="pile-label">Draw</span>
+          <div class="deck-stack">
+            <div class="deck-card deck-card-3"></div>
+            <div class="deck-card deck-card-2"></div>
+            <div class="deck-card deck-card-1"></div>
+            <span class="pile-count" id="draw-count">0</span>
+          </div>
+          <span class="pile-label">Draw Pile</span>
         </button>
         <button class="pile discard-pile" id="pile-discard" title="Discard pile">
-          <div id="discard-card-holder"></div>
-          <span class="pile-label">Discard</span>
+          <div id="discard-card-holder" class="discard-slot"></div>
+          <span class="pile-label">Discard Pile</span>
         </button>
       </div>
-      <div class="turn-banner" id="turn-banner">Waiting&hellip;</div>
+      <div class="drawn-preview hidden" id="drawn-preview">
+        <span class="drawn-preview-label">You drew</span>
+        <div id="drawn-preview-card"></div>
+      </div>
     </div>
 
-    <div class="self-area">
+    <div class="self-area" id="self-area">
       <div class="self-header">
         <span class="self-name" id="self-name">You</span>
         <span class="self-score">Score: <span id="self-score">0</span></span>
       </div>
       <div class="grid grid-self" id="self-grid"></div>
+      <p class="self-hint hidden" id="self-hint"></p>
     </div>
 
     <div class="action-bar" id="action-bar"></div>
   </div>
-
-  <!-- slap button -->
-  <button class="slap-fab hidden" id="btn-slap-mode">SLAP!</button>
 
   <!-- side panels -->
   <div class="panel-overlay hidden" id="log-panel">
@@ -205,8 +216,8 @@
       <ul>
         <li><b>7 or 8</b> &mdash; Peek at one of your own cards.</li>
         <li><b>9 or 10</b> &mdash; Peek at one opponent's card.</li>
-        <li><b>J or Q</b> &mdash; Blind swap: swap any two cards on the table without looking.</li>
-        <li><b>King</b> &mdash; Look at any two cards, then choose whether to swap them.</li>
+        <li><b>J</b> &mdash; Blind swap: swap any two cards on the table without looking.</li>
+        <li><b>Q or King</b> &mdash; Look &amp; Swap: look at any two cards, then choose whether to swap them.</li>
       </ul>
       <h4>Slapping</h4>
       <p>Any time a card lands on the discard pile, anyone who thinks they hold a matching rank can slap it in &mdash; even out of turn. Guess right and that card is gone (fewer points!). Guess wrong and you pick up a penalty card.</p>
