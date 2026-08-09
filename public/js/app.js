@@ -89,6 +89,189 @@
     return state.hostId === state.you;
   }
 
+  // ---------- round table geometry ----------
+
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // state.players is already server-ordered by turn; rotate it so "you" is
+  // index 0, which keeps the seating clockwise-from-you in real turn order -
+  // like everyone sitting around a physical table.
+  function seatOrder(state) {
+    const myIndex = state.players.findIndex((p) => p.id === state.you);
+    if (myIndex < 0) return state.players;
+    return state.players.slice(myIndex).concat(state.players.slice(0, myIndex));
+  }
+
+  function seatPosition(i, n) {
+    const angleDeg = 180 + (360 / n) * i;
+    const rad = (angleDeg * Math.PI) / 180;
+    const cx = 50, cy = 50, rx = 41, ry = 39;
+    return { x: cx + rx * Math.sin(rad), y: cy - ry * Math.cos(rad) };
+  }
+
+  function renderSeats(state) {
+    const layer = $('#seats-layer');
+    layer.innerHTML = '';
+    const rotated = seatOrder(state);
+    const n = rotated.length;
+    for (let i = 1; i < n; i++) {
+      const p = rotated[i];
+      const isTurn = p.id === state.currentTurn;
+      const { x, y } = seatPosition(i, n);
+      const seat = el('div', `seat ${isTurn ? 'active-turn' : ''} ${!p.connected ? 'offline' : ''}`.replace(/\s+/g, ' ').trim());
+      seat.style.left = `${x}%`;
+      seat.style.top = `${y}%`;
+      seat.dataset.playerId = p.id;
+
+      const avatar = el('div', 'seat-avatar', [document.createTextNode(p.name.charAt(0).toUpperCase())]);
+      avatar.style.background = p.color;
+      avatar.appendChild(el('span', 'seat-cardcount', [document.createTextNode(String(p.cardCount))]));
+      seat.appendChild(avatar);
+
+      seat.appendChild(el('div', 'seat-name', [document.createTextNode(p.name)]));
+
+      const meta = el('div', 'seat-meta');
+      if (isTurn) meta.appendChild(el('span', 'seat-turn-badge', [document.createTextNode('Turn')]));
+      meta.appendChild(el('span', '', [document.createTextNode(`${p.score} pts`)]));
+      seat.appendChild(meta);
+
+      layer.appendChild(seat);
+    }
+  }
+
+  function seatAvatarRect(playerId, state) {
+    if (playerId === state.you) {
+      const el_ = $('#self-area');
+      return el_ ? el_.getBoundingClientRect() : null;
+    }
+    const node = document.querySelector(`.seat[data-player-id="${playerId}"] .seat-avatar`);
+    return node ? node.getBoundingClientRect() : null;
+  }
+
+  function pileRect(which) {
+    const node = $(which === 'draw' ? '#pile-draw' : '#pile-discard');
+    return node ? node.getBoundingClientRect() : null;
+  }
+
+  function flashImpact(target) {
+    if (reducedMotion || !target) return;
+    target.classList.add('impact');
+    setTimeout(() => target.classList.remove('impact'), 400);
+  }
+
+  // A rect from an element inside a display:none ancestor (e.g. a different,
+  // inactive .screen) comes back as all-zero rather than null - treat that
+  // as "not currently on screen" so we never animate from the corner.
+  function isRenderedRect(r) {
+    return !!r && (r.width > 0 || r.height > 0) && (r.top !== 0 || r.left !== 0 || r.width !== 0 || r.height !== 0);
+  }
+
+  // Animates a ghost card flying between two screen rects using the Web
+  // Animations API - purely cosmetic, never touches game state.
+  function flyGhost(fromRect, toRect, { faceUp = false, card = null, duration = 520, delay = 0, rotate = 0 } = {}) {
+    if (reducedMotion || !isRenderedRect(fromRect) || !isRenderedRect(toRect)) return Promise.resolve();
+    const ghost = el('div', `card ghost-card ${faceUp ? 'flipped' : ''}`.trim());
+    const inner = el('div', 'card-inner');
+    const back = el('div', 'card-back');
+    const front = el('div', `card-front ${faceUp && card ? suitColor(card.suit) : ''}`);
+    if (faceUp && card) {
+      front.appendChild(el('div', 'rank', [document.createTextNode(card.rank)]));
+      front.appendChild(el('div', 'suit', [document.createTextNode(SUIT_SYMBOL[card.suit])]));
+    }
+    inner.appendChild(back);
+    inner.appendChild(front);
+    ghost.appendChild(inner);
+    document.body.appendChild(ghost);
+
+    const fromCx = fromRect.left + fromRect.width / 2;
+    const fromCy = fromRect.top + fromRect.height / 2;
+    const toCx = toRect.left + toRect.width / 2;
+    const toCy = toRect.top + toRect.height / 2;
+    ghost.style.left = `${fromCx - 34}px`;
+    ghost.style.top = `${fromCy - 48}px`;
+    const dx = toCx - fromCx;
+    const dy = toCy - fromCy;
+
+    return new Promise((resolve) => {
+      const anim = ghost.animate(
+        [
+          { transform: 'translate(0px, 0px) rotate(0deg) scale(1)', offset: 0 },
+          { transform: `translate(${dx * 0.5}px, ${dy * 0.5 - 30}px) rotate(${rotate * 0.5}deg) scale(1.04)`, offset: 0.55 },
+          { transform: `translate(${dx}px, ${dy}px) rotate(${rotate}deg) scale(1)`, offset: 1 },
+        ],
+        { duration, delay, easing: 'cubic-bezier(.3,.6,.35,1)', fill: 'forwards' }
+      );
+      anim.onfinish = () => { ghost.remove(); resolve(); };
+    });
+  }
+
+  // ---------- transition-triggered animation ----------
+
+  function detectAndAnimate(prev, next) {
+    if (!prev || reducedMotion) return;
+    if (!next.players || !next.players.length) return;
+    if (next.phase !== 'playing') return;
+
+    if (prev.phase === 'playing' && prev.turnState === 'idle' && next.turnState === 'drawn' && next.currentTurn) {
+      animateDraw(next, next.currentTurn);
+    }
+    if (prev.phase === 'playing' && prev.turnState === 'drawn' && next.turnState !== 'drawn' && prev.currentTurn) {
+      animateDiscard(next, prev.currentTurn);
+    }
+
+    const lastLog = next.log && next.log.length ? next.log[next.log.length - 1] : null;
+    const prevLastLog = prev.log && prev.log.length ? prev.log[prev.log.length - 1] : null;
+    if (lastLog && lastLog.text.includes('slapped a matching') && (!prevLastLog || lastLog.ts !== prevLastLog.ts)) {
+      const name = lastLog.text.split(' slapped')[0];
+      const player = next.players.find((p) => p.name === name);
+      if (player) animateSlap(next, player.id);
+    }
+  }
+
+  function animateDraw(state, playerId) {
+    const drawnFromDiscard = state.drawnFrom === 'discard';
+    const from = pileRect(drawnFromDiscard ? 'discard' : 'draw');
+    const to = seatAvatarRect(playerId, state);
+    const faceUp = drawnFromDiscard && !!state.drawnCard;
+    flyGhost(from, to, { faceUp, card: state.drawnCard, rotate: 6 }).then(() => {
+      flashImpact(playerId === state.you ? $('#self-area') : document.querySelector(`.seat[data-player-id="${playerId}"]`));
+    });
+  }
+
+  function animateDiscard(state, playerId) {
+    const from = seatAvatarRect(playerId, state);
+    const to = pileRect('discard');
+    flyGhost(from, to, { faceUp: true, card: state.discardTop, rotate: -8 }).then(() => {
+      flashImpact($('#pile-discard'));
+    });
+  }
+
+  function animateSlap(state, playerId) {
+    const from = seatAvatarRect(playerId, state);
+    const to = pileRect('discard');
+    flyGhost(from, to, { faceUp: true, card: state.discardTop, duration: 320, rotate: -14 }).then(() => {
+      flashImpact($('#pile-discard'));
+    });
+  }
+
+  function launchConfetti() {
+    if (reducedMotion) return;
+    const layer = $('#confetti-layer');
+    if (!layer) return;
+    layer.innerHTML = '';
+    const colors = ['#e8c874', '#e0556b', '#6fce9a', '#7dc4e0', '#a78bfa', '#f0d99a'];
+    for (let i = 0; i < 60; i++) {
+      const piece = el('div', 'confetti-piece');
+      piece.style.left = `${Math.random() * 100}%`;
+      piece.style.background = colors[i % colors.length];
+      piece.style.animationDuration = `${2.2 + Math.random() * 1.6}s`;
+      piece.style.animationDelay = `${Math.random() * 0.6}s`;
+      piece.style.transform = `rotate(${Math.random() * 360}deg)`;
+      layer.appendChild(piece);
+    }
+    setTimeout(() => { layer.innerHTML = ''; }, 4200);
+  }
+
   // ---------- socket wiring ----------
 
   socket.on('connect', () => {
@@ -103,9 +286,11 @@
   });
 
   socket.on('state', (state) => {
+    const prev = latest;
     latest = state;
     LS.roomCode = state.code;
     render(state);
+    detectAndAnimate(prev, state);
   });
 
   socket.on('action-error', (p) => toast(p.message, 'error'));
@@ -276,12 +461,23 @@
 
   $('#btn-ready').onclick = () => socket.emit('ready', {}, () => {});
 
+  let dealAnimatedRound = null;
+
   function renderPeek(state) {
     $('#peek-round').textContent = state.round;
     const me_ = myPlayer(state);
     const grid = $('#peek-grid');
     grid.innerHTML = '';
-    me_.grid.forEach((card) => grid.appendChild(cardEl(card)));
+    const isFirstRenderThisRound = dealAnimatedRound !== state.round;
+    dealAnimatedRound = state.round;
+    me_.grid.forEach((card, i) => {
+      const node = cardEl(card);
+      if (isFirstRenderThisRound && !reducedMotion) {
+        node.classList.add('deal-in');
+        node.style.animationDelay = `${i * 90}ms`;
+      }
+      grid.appendChild(node);
+    });
     const connectedCount = state.players.filter((p) => p.connected).length;
     $('#peek-ready-count').textContent = `${state.peekReadyCount}/${connectedCount} ready`;
     $('#btn-ready').disabled = state.iAmReady;
@@ -345,25 +541,7 @@
     const isMyTurn = state.currentTurn === state.you;
     const iAmSlapping = state.slapWindowActive;
 
-    // opponents
-    const row = $('#opponents-row');
-    row.innerHTML = '';
-    state.players.filter((p) => p.id !== state.you).forEach((p) => {
-      const isTurn = p.id === state.currentTurn;
-      const card = el('div', `opponent-card ${isTurn ? 'active-turn' : ''}`);
-      const header = el('div', 'opponent-header');
-      const dot = el('span', 'dot');
-      dot.style.background = p.color;
-      header.appendChild(dot);
-      header.appendChild(el('span', 'opponent-name', [document.createTextNode(p.name + (p.connected ? '' : ' (off)'))]));
-      if (isTurn) header.appendChild(el('span', 'opponent-turn-badge', [document.createTextNode('Turn')]));
-      header.appendChild(el('span', 'opponent-score', [document.createTextNode(String(p.score))]));
-      card.appendChild(header);
-      const g = el('div', 'opponent-grid');
-      p.grid.forEach((c) => g.appendChild(cardEl(c, { size: 'small' })));
-      card.appendChild(g);
-      row.appendChild(card);
-    });
+    renderSeats(state);
 
     // discard / draw piles
     const discardHolder = $('#discard-card-holder');
@@ -639,6 +817,7 @@
   // ---------- router ----------
 
   function render(state) {
+    const enteringGameOver = state.phase === 'gameover' && lastPhase !== 'gameover';
     if (state.phase !== lastPhase) {
       power = { mode: null, a: null, b: null };
       closeModal('power-modal');
@@ -653,5 +832,7 @@
     else if (state.phase === 'playing') renderGame(state);
     else if (state.phase === 'reveal') renderReveal(state);
     else if (state.phase === 'gameover') renderGameOver(state);
+
+    if (enteringGameOver) launchConfetti();
   }
 })();

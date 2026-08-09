@@ -109,27 +109,29 @@
       <div class="status-sub" id="status-sub"></div>
     </div>
 
-    <div class="opponents-row" id="opponents-row"></div>
-
-    <div class="table-center">
-      <div class="pile-group">
-        <button class="pile draw-pile" id="pile-draw" title="Draw pile">
-          <div class="deck-stack">
-            <div class="deck-card deck-card-3"></div>
-            <div class="deck-card deck-card-2"></div>
-            <div class="deck-card deck-card-1"></div>
-            <span class="pile-count" id="draw-count">0</span>
-          </div>
-          <span class="pile-label">Draw Pile</span>
-        </button>
-        <button class="pile discard-pile" id="pile-discard" title="Discard pile">
-          <div id="discard-card-holder" class="discard-slot"></div>
-          <span class="pile-label">Discard Pile</span>
-        </button>
-      </div>
-      <div class="drawn-preview hidden" id="drawn-preview">
-        <span class="drawn-preview-label">You drew</span>
-        <div id="drawn-preview-card"></div>
+    <div class="table-round" id="table-round">
+      <div class="table-oval"></div>
+      <div class="seats-layer" id="seats-layer"></div>
+      <div class="table-piles">
+        <div class="pile-group">
+          <button class="pile draw-pile" id="pile-draw" title="Draw pile">
+            <div class="deck-stack">
+              <div class="deck-card deck-card-3"></div>
+              <div class="deck-card deck-card-2"></div>
+              <div class="deck-card deck-card-1"></div>
+              <span class="pile-count" id="draw-count">0</span>
+            </div>
+            <span class="pile-label">Draw Pile</span>
+          </button>
+          <button class="pile discard-pile" id="pile-discard" title="Discard pile">
+            <div id="discard-card-holder" class="discard-slot"></div>
+            <span class="pile-label">Discard Pile</span>
+          </button>
+        </div>
+        <div class="drawn-preview hidden" id="drawn-preview">
+          <span class="drawn-preview-label">You drew</span>
+          <div id="drawn-preview-card"></div>
+        </div>
       </div>
     </div>
 
@@ -190,6 +192,7 @@
 
 <!-- GAME OVER -->
 <section class="screen has-bottom-bar" id="screen-gameover">
+  <div class="confetti-layer" id="confetti-layer"></div>
   <div class="reveal-wrap">
     <div class="winner-banner">
       <p class="eyebrow">Winner</p>
