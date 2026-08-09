@@ -7,9 +7,17 @@ const DEFAULT_TARGET_SCORE = 100;
 const SLAP_WINDOW_MS = 3000;
 const INITIAL_KNOWN_SLOTS = [2, 3]; // bottom row of the 2x2 deal
 
+// Jewel tones instead of bright cartoon colors - each avatar reads like a
+// gemstone on the felt rather than a kids'-app palette.
 const PLAYER_COLORS = [
-  '#ff6b6b', '#4dd0e1', '#ffd166', '#a78bfa',
-  '#66d9a6', '#ff8fab', '#f4a261', '#7dd3fc',
+  '#9c3349', // ruby
+  '#2f6690', // sapphire
+  '#c9a44c', // topaz / gold
+  '#6b4b8a', // amethyst
+  '#2f7a5c', // emerald
+  '#b0703f', // bronze
+  '#2a8f8f', // teal
+  '#a35a72', // rose-bronze
 ];
 
 function publicCard(card) {
