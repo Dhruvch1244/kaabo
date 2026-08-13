@@ -48,16 +48,27 @@
   const SUIT_SYMBOL = { S: '♠', H: '♥', D: '♦', C: '♣' };
   const suitColor = (suit) => (suit === 'H' || suit === 'D' ? 'red' : 'black');
 
+  // Real playing-card layout: mirrored corner indices (rank over suit,
+  // top-left and bottom-right) plus a large center suit pip - shared by
+  // every place a card face gets built so the three call sites can't drift.
+  function buildCardFace(front, card) {
+    const symbol = SUIT_SYMBOL[card.suit];
+    const corner = (position) => el(`div`, `pip ${position}`, [
+      el('span', 'pip-rank', [document.createTextNode(card.rank)]),
+      el('span', 'pip-suit', [document.createTextNode(symbol)]),
+    ]);
+    front.appendChild(corner('pip-tl'));
+    front.appendChild(el('div', 'suit-center', [document.createTextNode(symbol)]));
+    front.appendChild(corner('pip-br'));
+  }
+
   function cardEl(card, { size = '', tappable = false, selected = false, extraClass = '' } = {}) {
     const known = card && !card.hidden;
     const wrap = el('div', `card ${size} ${tappable ? 'tappable' : ''} ${selected ? 'selectable' : ''} ${known ? 'flipped' : ''} ${extraClass}`.replace(/\s+/g, ' ').trim());
     const inner = el('div', 'card-inner');
     const back = el('div', 'card-back');
     const front = el('div', `card-front ${known ? suitColor(card.suit) : ''}`);
-    if (known) {
-      front.appendChild(el('div', 'rank', [document.createTextNode(card.rank)]));
-      front.appendChild(el('div', 'suit', [document.createTextNode(SUIT_SYMBOL[card.suit])]));
-    }
+    if (known) buildCardFace(front, card);
     inner.appendChild(back);
     inner.appendChild(front);
     wrap.appendChild(inner);
@@ -67,10 +78,7 @@
   function faceUpCardEl(card, size = '') {
     const wrap = el('div', `card card-face-up ${size}`.trim());
     const front = el('div', `card-front ${card ? suitColor(card.suit) : ''}`);
-    if (card) {
-      front.appendChild(el('div', 'rank', [document.createTextNode(card.rank)]));
-      front.appendChild(el('div', 'suit', [document.createTextNode(SUIT_SYMBOL[card.suit])]));
-    }
+    if (card) buildCardFace(front, card);
     wrap.appendChild(front);
     return wrap;
   }
@@ -174,10 +182,7 @@
     const inner = el('div', 'card-inner');
     const back = el('div', 'card-back');
     const front = el('div', `card-front ${faceUp && card ? suitColor(card.suit) : ''}`);
-    if (faceUp && card) {
-      front.appendChild(el('div', 'rank', [document.createTextNode(card.rank)]));
-      front.appendChild(el('div', 'suit', [document.createTextNode(SUIT_SYMBOL[card.suit])]));
-    }
+    if (faceUp && card) buildCardFace(front, card);
     inner.appendChild(back);
     inner.appendChild(front);
     ghost.appendChild(inner);
@@ -260,12 +265,16 @@
     if (!layer) return;
     layer.innerHTML = '';
     const colors = ['#e8c874', '#e0556b', '#6fce9a', '#7dc4e0', '#a78bfa', '#f0d99a'];
-    for (let i = 0; i < 60; i++) {
-      const piece = el('div', 'confetti-piece');
+    const shapes = ['', 'confetti-round', 'confetti-diamond'];
+    for (let i = 0; i < 70; i++) {
+      const shape = shapes[i % shapes.length];
+      const piece = el('div', `confetti-piece ${shape}`.trim());
       piece.style.left = `${Math.random() * 100}%`;
       piece.style.background = colors[i % colors.length];
       piece.style.animationDuration = `${2.2 + Math.random() * 1.6}s`;
       piece.style.animationDelay = `${Math.random() * 0.6}s`;
+      piece.style.setProperty('--spin', `${360 + Math.random() * 540}deg`);
+      piece.style.setProperty('--drift', `${(Math.random() - 0.5) * 140}px`);
       piece.style.transform = `rotate(${Math.random() * 360}deg)`;
       layer.appendChild(piece);
     }
