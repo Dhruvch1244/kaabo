@@ -29,7 +29,8 @@
   --shadow-card: 0 10px 22px rgba(0, 0, 0, 0.35), 0 2px 5px rgba(0, 0, 0, 0.25);
   --glow-gold: 0 0 0 3px rgba(34, 211, 238, 0.9), 0 0 22px rgba(34, 211, 238, 0.4);
   --glow-red: 0 0 0 3px rgba(214, 31, 122, 0.9), 0 0 22px rgba(214, 31, 122, 0.45);
-  --font-display: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  --font-display: 'Instrument Serif', Georgia, 'Times New Roman', serif;
+  --font-mono: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
   --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --radius: 20px;
   --radius-sm: 14px;
@@ -84,9 +85,33 @@ input, textarea {
 
 h1, h2, h3, h4 {
   font-family: var(--font-display);
-  font-weight: 700;
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
   margin: 0 0 6px;
   color: var(--cream);
+}
+
+/* signature move: animated gradient-fill text, the same cyan -> violet ->
+   magenta sweep used on the portfolio, so both feel like one identity */
+.gradient-text {
+  background: linear-gradient(100deg, var(--gold) 0%, var(--amethyst) 45%, var(--danger-bright) 75%, var(--gold) 100%);
+  background-size: 250% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 22px rgba(34, 211, 238, 0.35));
+  font-style: italic;
+  animation: gradientSweep 7s ease-in-out infinite;
+}
+
+@keyframes gradientSweep {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gradient-text { animation: none; }
 }
 
 p { margin: 0 0 10px; color: var(--muted); }
@@ -276,9 +301,10 @@ p { margin: 0 0 10px; color: var(--muted); }
   border-radius: 24px;
   background: linear-gradient(160deg, var(--gold-bright), var(--gold) 55%, var(--gold-deep));
   color: #052024;
-  font-family: var(--font-display);
-  font-size: 2.6rem;
-  font-weight: 900;
+  font-family: var(--font-body);
+  font-size: 2.2rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
   display: flex; align-items: center; justify-content: center;
   box-shadow: var(--shadow-lg), inset 0 1px 0 rgba(255,255,255,0.4);
   border: 1px solid rgba(14, 116, 144, 0.5);
@@ -300,7 +326,7 @@ p { margin: 0 0 10px; color: var(--muted); }
   0%, 30% { left: -60%; }
   70%, 100% { left: 140%; }
 }
-.brand h1 { font-size: 2.8rem; letter-spacing: 0.5px; margin-top: 6px; }
+.brand h1 { font-size: 4.2rem; letter-spacing: -0.01em; margin-top: 6px; }
 .tagline { color: var(--muted); font-size: 1rem; }
 .landing-actions { display: flex; flex-direction: column; gap: 12px; width: 100%; }
 .hint { font-size: 0.82rem; color: var(--muted-dim); }
@@ -347,7 +373,7 @@ input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(34, 211, 238
 .lobby-wrap { width: 100%; max-width: 480px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .lobby-header { width: 100%; display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 12px; }
 .eyebrow { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted-dim); margin: 0; }
-.room-code { font-size: 2.6rem; letter-spacing: 0.18em; color: var(--gold); margin: 0; text-shadow: 0 0 24px rgba(34, 211, 238, 0.35); }
+.room-code { font-size: 3.2rem; letter-spacing: 0.14em; color: var(--gold); margin: 0; text-shadow: 0 0 24px rgba(34, 211, 238, 0.35); }
 
 .address-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
 .address-list code {
@@ -441,8 +467,8 @@ input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(34, 211, 238
 .card-back::after {
   content: 'K';
   color: rgba(165, 243, 252, 0.92);
-  font-family: var(--font-display);
-  font-weight: 700;
+  font-family: var(--font-body);
+  font-weight: 800;
   font-size: 1.5rem;
   position: relative;
   text-shadow: 0 0 10px rgba(34, 211, 238, 0.4);
@@ -562,8 +588,8 @@ input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(34, 211, 238
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--font-display);
-  font-weight: 900;
+  font-family: var(--font-body);
+  font-weight: 800;
   font-size: 3.4rem;
   color: rgba(34, 211, 238, 0.07);
   pointer-events: none;
@@ -594,7 +620,7 @@ input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(34, 211, 238
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--font-display);
+  font-family: var(--font-body);
   font-weight: 700;
   font-size: 1.1rem;
   color: var(--gold-soft);
@@ -698,7 +724,7 @@ input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(34, 211, 238
   border: 2px solid rgba(34, 211, 238, 0.55);
   box-shadow: var(--shadow-sm);
 }
-.deck-card::after { content: 'K'; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: rgba(165, 243, 252, 0.9); font-family: var(--font-display); font-weight: 700; font-size: 1.5rem; }
+.deck-card::after { content: 'K'; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: rgba(165, 243, 252, 0.9); font-family: var(--font-body); font-weight: 800; font-size: 1.5rem; }
 .deck-card-2 { transform: translate(3px, -3px); opacity: 0.85; }
 .deck-card-3 { transform: translate(6px, -6px); opacity: 0.65; }
 .pile-count {
@@ -820,7 +846,20 @@ input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(34, 211, 238
 .reveal-grid { display: flex; gap: 6px; flex: 1; flex-wrap: wrap; }
 
 .winner-banner { display: flex; flex-direction: column; align-items: center; gap: 4px; margin-bottom: 4px; }
-.winner-banner h1 { font-size: 2.4rem; color: var(--gold); text-shadow: 0 0 30px rgba(34, 211, 238, 0.4); }
+.winner-banner h1 {
+  font-size: 3.4rem;
+  background: linear-gradient(100deg, var(--gold) 0%, var(--amethyst) 45%, var(--danger-bright) 75%, var(--gold) 100%);
+  background-size: 250% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 0 26px rgba(34, 211, 238, 0.4));
+  font-style: italic;
+  animation: gradientSweep 7s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .winner-banner h1 { animation: none; }
+}
 
 /* ---------- toasts ---------- */
 
