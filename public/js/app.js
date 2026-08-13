@@ -264,7 +264,7 @@
     const layer = $('#confetti-layer');
     if (!layer) return;
     layer.innerHTML = '';
-    const colors = ['#e8c874', '#e0556b', '#6fce9a', '#7dc4e0', '#a78bfa', '#f0d99a'];
+    const colors = ['#22d3ee', '#ff2ec4', '#9d3bf5', '#7ee8fa', '#ff4f9a', '#a5f3fc'];
     const shapes = ['', 'confetti-round', 'confetti-diamond'];
     for (let i = 0; i < 70; i++) {
       const shape = shapes[i % shapes.length];
