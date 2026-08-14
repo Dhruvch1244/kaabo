@@ -4,7 +4,7 @@ const express = require('express');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
 const { RoomManager } = require('./rooms');
-const { MIN_PLAYERS, MAX_PLAYERS } = require('./game');
+const { MIN_PLAYERS, MAX_PLAYERS, AVATARS } = require('./game');
 
 const PORT = process.env.PORT || 3000;
 
@@ -41,6 +41,7 @@ app.get('/api/host-info', (req, res) => {
     openRoomCode: open ? open.code : null,
     minPlayers: MIN_PLAYERS,
     maxPlayers: MAX_PLAYERS,
+    avatars: AVATARS,
   });
 });
 
@@ -65,10 +66,10 @@ function getRoom(socket) {
 io.on('connection', (socket) => {
   socket.on(
     'create-room',
-    safeHandle(socket, ({ playerId, name } = {}) => {
+    safeHandle(socket, ({ playerId, name, avatar } = {}) => {
       if (!playerId || !name) throw new Error('Missing player info.');
       const room = rooms.createRoom();
-      room.addPlayer(playerId, name, socket.id);
+      room.addPlayer(playerId, name, socket.id, avatar);
       socket.data.roomCode = room.code;
       socket.data.playerId = playerId;
       socket.join(room.code);
@@ -79,11 +80,11 @@ io.on('connection', (socket) => {
 
   socket.on(
     'join-room',
-    safeHandle(socket, ({ roomCode, playerId, name } = {}) => {
+    safeHandle(socket, ({ roomCode, playerId, name, avatar } = {}) => {
       if (!roomCode || !playerId || !name) throw new Error('Missing player info.');
       const room = rooms.get(roomCode);
       if (!room) throw new Error('Room not found. Check the code.');
-      room.addPlayer(playerId, name, socket.id);
+      room.addPlayer(playerId, name, socket.id, avatar);
       socket.data.roomCode = room.code;
       socket.data.playerId = playerId;
       socket.join(room.code);

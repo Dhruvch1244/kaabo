@@ -355,6 +355,43 @@ p { margin: 0 0 10px; color: var(--muted); }
 .field-inline { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .field-inline span { font-size: 0.9rem; color: var(--muted); }
 
+.avatar-picker {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+}
+
+.avatar-option {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  background: rgba(0, 0, 0, 0.28);
+  border: 1.5px solid var(--panel-border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.avatar-option:hover {
+  transform: translateY(-2px);
+  border-color: rgba(34, 211, 238, 0.5);
+}
+
+.avatar-option.selected {
+  background: rgba(34, 211, 238, 0.16);
+  border-color: var(--gold);
+  box-shadow: var(--glow-gold);
+  transform: scale(1.06);
+}
+
+@media (max-width: 380px) {
+  .avatar-picker {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
 input[type="text"], input[type="number"] {
   background: rgba(0,0,0,0.28);
   border: 1px solid var(--panel-border);
@@ -395,7 +432,9 @@ input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(34, 211, 238
   transition: background 0.15s ease;
 }
 .dot {
-  width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0;
+  width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem; line-height: 1;
   box-shadow: 0 0 0 3px rgba(255,255,255,0.08), inset 0 1px 1px rgba(255,255,255,0.5), inset 0 -2px 3px rgba(0,0,0,0.35);
 }
 .player-name { flex: 1; font-weight: 600; }
@@ -623,7 +662,7 @@ input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(34, 211, 238
   justify-content: center;
   font-family: var(--font-body);
   font-weight: 700;
-  font-size: 1.1rem;
+  font-size: 1.5rem;
   color: var(--gold-soft);
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
   border: 2px solid rgba(34, 211, 238, 0.5);

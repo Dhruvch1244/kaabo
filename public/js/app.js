@@ -16,7 +16,15 @@
     set name(v) { localStorage.setItem('kaabo_name', v); },
     get roomCode() { return localStorage.getItem('kaabo_roomCode') || ''; },
     set roomCode(v) { v ? localStorage.setItem('kaabo_roomCode', v) : localStorage.removeItem('kaabo_roomCode'); },
+    get avatar() { return localStorage.getItem('kaabo_avatar') || ''; },
+    set avatar(v) { localStorage.setItem('kaabo_avatar', v); },
   };
+
+  // Mirrors server/game.js AVATARS - the server is the source of truth and
+  // re-validates on join, this list is just so the picker has something to
+  // show instantly without a round trip.
+  const AVATARS = ['🐱', '🐶', '🐰', '🦊', '🐼', '🐨', '🦁', '🐸', '🐧', '🦉', '🐯', '🐹'];
+  let selectedAvatar = AVATARS.includes(LS.avatar) ? LS.avatar : AVATARS[0];
 
   const me = { id: LS.playerId };
   const socket = io();
@@ -131,7 +139,7 @@
       seat.style.top = `${y}%`;
       seat.dataset.playerId = p.id;
 
-      const avatar = el('div', 'seat-avatar', [document.createTextNode(p.name.charAt(0).toUpperCase())]);
+      const avatar = el('div', 'seat-avatar', [document.createTextNode(p.avatar || p.name.charAt(0).toUpperCase())]);
       avatar.style.background = p.color;
       avatar.appendChild(el('span', 'seat-cardcount', [document.createTextNode(String(p.cardCount))]));
       seat.appendChild(avatar);
@@ -339,6 +347,23 @@
 
   // ---------- landing / entry ----------
 
+  function renderAvatarPicker() {
+    const box = $('#avatar-picker');
+    box.innerHTML = '';
+    AVATARS.forEach((a) => {
+      const btn = el('button', `avatar-option ${a === selectedAvatar ? 'selected' : ''}`.trim(), [document.createTextNode(a)]);
+      btn.type = 'button';
+      btn.setAttribute('aria-label', 'Pick character');
+      btn.onclick = () => {
+        selectedAvatar = a;
+        LS.avatar = a;
+        $$('.avatar-option').forEach((b) => b.classList.toggle('selected', b === btn));
+      };
+      box.appendChild(btn);
+    });
+  }
+  renderAvatarPicker();
+
   let entryMode = 'host';
 
   $('#btn-go-host').onclick = () => {
@@ -390,7 +415,7 @@
     if (!name) { $('#entry-error').textContent = 'Enter your name.'; return; }
     LS.name = name;
     if (entryMode === 'host') {
-      socket.emit('create-room', { playerId: me.id, name }, (ack) => {
+      socket.emit('create-room', { playerId: me.id, name, avatar: selectedAvatar }, (ack) => {
         if (!ack.ok) { $('#entry-error').textContent = ack.error; return; }
         LS.roomCode = ack.code;
         lobbyInfoLoaded = false;
@@ -398,7 +423,7 @@
     } else {
       const code = $('#input-room-code').value.trim().toUpperCase();
       if (code.length < 4) { $('#entry-error').textContent = 'Enter the 4-letter room code.'; return; }
-      socket.emit('join-room', { roomCode: code, playerId: me.id, name }, (ack) => {
+      socket.emit('join-room', { roomCode: code, playerId: me.id, name, avatar: selectedAvatar }, (ack) => {
         if (!ack.ok) { $('#entry-error').textContent = ack.error; return; }
         LS.roomCode = ack.code;
         lobbyInfoLoaded = false;
@@ -429,7 +454,9 @@
     list.innerHTML = '';
     state.players.forEach((p) => {
       const li = el('li');
-      li.appendChild(el('span', 'dot', [])).style.background = p.color;
+      const dot = el('span', 'dot', [document.createTextNode(p.avatar || '')]);
+      dot.style.background = p.color;
+      li.appendChild(dot);
       const name = el('span', 'player-name', [document.createTextNode(p.name + (p.id === state.you ? ' (You)' : ''))]);
       li.appendChild(name);
       if (p.isHost) li.appendChild(el('span', 'player-tag', [document.createTextNode('HOST')]));

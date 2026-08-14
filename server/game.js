@@ -20,6 +20,10 @@ const PLAYER_COLORS = [
   '#a35a72', // rose-bronze
 ];
 
+// The character picker on the entry screen - whitelisted server-side so a
+// tampered client can't shove an arbitrary string into everyone else's seat.
+const AVATARS = ['🐱', '🐶', '🐰', '🦊', '🐼', '🐨', '🦁', '🐸', '🐧', '🦉', '🐯', '🐹'];
+
 function publicCard(card) {
   if (!card) return null;
   return { rank: card.rank, suit: card.suit, value: card.value, power: card.power };
@@ -65,7 +69,7 @@ class Room {
 
   // ---------- lobby ----------
 
-  addPlayer(id, name, socketId) {
+  addPlayer(id, name, socketId, avatar) {
     if (this.players.has(id)) {
       const p = this.players.get(id);
       p.socketId = socketId;
@@ -82,6 +86,7 @@ class Room {
     const player = {
       id,
       name: (name || 'Player').slice(0, 16),
+      avatar: AVATARS.includes(avatar) ? avatar : AVATARS[this.players.size % AVATARS.length],
       color: PLAYER_COLORS[this.players.size % PLAYER_COLORS.length],
       socketId,
       connected: true,
@@ -526,6 +531,7 @@ class Room {
       return {
         id: p.id,
         name: p.name,
+        avatar: p.avatar,
         color: p.color,
         connected: p.connected,
         isHost: id === this.hostId,
@@ -585,4 +591,4 @@ class Room {
   }
 }
 
-module.exports = { Room, MIN_PLAYERS, MAX_PLAYERS };
+module.exports = { Room, MIN_PLAYERS, MAX_PLAYERS, AVATARS };
