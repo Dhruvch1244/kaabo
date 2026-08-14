@@ -9,11 +9,3 @@ services:
     envVars:
       - key: NODE_VERSION
         value: 20.11.0
-      - key: SPOTIFY_CLIENT_ID
-        sync: false
-      - key: SPOTIFY_CLIENT_SECRET
-        sync: false
-      - key: SPOTIFY_REFRESH_TOKEN
-        sync: false
-      - key: SPOTIFY_USER_ID
-        sync: false

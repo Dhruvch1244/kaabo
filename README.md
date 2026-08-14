@@ -88,29 +88,6 @@ screen, or **Rules** from the lobby). Summary:
   (default 100, adjustable by the host in the lobby), the player with the
   lowest cumulative score wins.
 
-## Spotify widgets (portfolio site)
-
-This server also proxies a few read-only Spotify endpoints (`/api/spotify/now-playing`,
-`/api/spotify/top-artists`, `/api/spotify/playlists`) for `dhruvchoudhary.com`'s
-music page — same CORS-open pattern as `/api/status`. Requires four Render
-env vars, set in the dashboard only, never committed:
-
-- `SPOTIFY_CLIENT_ID` / `SPOTIFY_CLIENT_SECRET` — from a
-  [Spotify developer app](https://developer.spotify.com/dashboard).
-- `SPOTIFY_USER_ID` — the id in your profile URL
-  (`open.spotify.com/user/<this part>`); used for the public playlists list.
-- `SPOTIFY_REFRESH_TOKEN` — a long-lived token that authorizes reading your
-  currently-playing track and top artists. Mint it once:
-  1. In the Spotify app's dashboard settings, add redirect URI
-     `http://127.0.0.1:8888/callback`.
-  2. Locally: `export SPOTIFY_CLIENT_ID=... SPOTIFY_CLIENT_SECRET=...` then
-     `node scripts/get-spotify-refresh-token.mjs`.
-  3. Open the printed URL, approve, and the refresh token prints to your
-     terminal — paste it into Render as `SPOTIFY_REFRESH_TOKEN`.
-
-If these env vars aren't set, the endpoints just return 503 and the
-portfolio site's widgets hide themselves — nothing breaks.
-
 ## Project layout
 
 ```
