@@ -127,6 +127,7 @@ p { margin: 0 0 10px; color: var(--muted); }
   padding: 26px 18px calc(26px + env(safe-area-inset-bottom));
   animation: screenIn 0.38s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
+  z-index: 1;
 }
 .screen.active { display: flex; flex-direction: column; align-items: center; }
 /* Screens with a fixed bottom-bar need clearance so scrolled content
@@ -265,7 +266,7 @@ p { margin: 0 0 10px; color: var(--muted); }
   z-index: 1;
 }
 
-.landing-suits {
+.ambient-suits {
   position: fixed;
   inset: 0;
   overflow: hidden;
@@ -505,7 +506,7 @@ input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(34, 211, 238
 .card.small .suit-center { font-size: 1.2rem; }
 
 .card-face-up { position: relative; }
-.card-face-up .card-front { position: static; transform: none; }
+.card-face-up .card-front { transform: none; }
 .card-empty { opacity: 0; }
 
 .card.selectable { outline: 3px solid var(--gold); outline-offset: 2px; }
@@ -661,7 +662,7 @@ input:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(34, 211, 238
 
 .seat-cardcount {
   position: absolute;
-  bottom: -4px; right: -6px;
+  top: -5px; right: -7px;
   background: var(--felt-dark);
   color: var(--gold-soft);
   border: 1.5px solid rgba(34, 211, 238, 0.5);
