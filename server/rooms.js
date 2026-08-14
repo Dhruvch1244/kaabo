@@ -52,6 +52,22 @@ class RoomManager {
       }
     }
   }
+
+  // Aggregate, non-identifying counts only -- no room codes, names, or game
+  // state -- safe to expose publicly for a "people playing right now" badge.
+  getStatus() {
+    this.reap();
+    let activeRooms = 0;
+    let activePlayers = 0;
+    for (const room of this.rooms.values()) {
+      const connected = room.order.filter((id) => room.players.get(id)?.connected).length;
+      if (connected > 0) {
+        activeRooms++;
+        activePlayers += connected;
+      }
+    }
+    return { activeRooms, activePlayers };
+  }
 }
 
 module.exports = { RoomManager };

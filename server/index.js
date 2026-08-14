@@ -45,6 +45,14 @@ app.get('/api/host-info', (req, res) => {
   });
 });
 
+// Public, cross-origin, read-only: lets the portfolio site show a
+// "X people playing right now" badge without exposing anything about
+// individual rooms.
+app.get('/api/status', (req, res) => {
+  res.set('Access-Control-Allow-Origin', '*');
+  res.json(rooms.getStatus());
+});
+
 function safeHandle(socket, fn) {
   return (payload, ack) => {
     try {
