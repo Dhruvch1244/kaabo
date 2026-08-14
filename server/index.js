@@ -5,6 +5,7 @@ const { createServer } = require('http');
 const { Server } = require('socket.io');
 const { RoomManager } = require('./rooms');
 const { MIN_PLAYERS, MAX_PLAYERS, AVATARS } = require('./game');
+const spotify = require('./spotify');
 
 const PORT = process.env.PORT || 3000;
 
@@ -51,6 +52,42 @@ app.get('/api/host-info', (req, res) => {
 app.get('/api/status', (req, res) => {
   res.set('Access-Control-Allow-Origin', '*');
   res.json(rooms.getStatus());
+});
+
+// Public, cross-origin, read-only proxies for the portfolio site's Spotify
+// widgets. Real credentials (client id/secret, refresh token) live only in
+// Render env vars -- see README for setup.
+app.get('/api/spotify/now-playing', async (req, res) => {
+  res.set('Access-Control-Allow-Origin', '*');
+  try {
+    const data = await spotify.getNowPlaying();
+    if (!data) return res.status(503).json({ error: 'spotify unavailable' });
+    res.json(data);
+  } catch {
+    res.status(503).json({ error: 'spotify unavailable' });
+  }
+});
+
+app.get('/api/spotify/top-artists', async (req, res) => {
+  res.set('Access-Control-Allow-Origin', '*');
+  try {
+    const data = await spotify.getTopArtists();
+    if (!data) return res.status(503).json({ error: 'spotify unavailable' });
+    res.json(data);
+  } catch {
+    res.status(503).json({ error: 'spotify unavailable' });
+  }
+});
+
+app.get('/api/spotify/playlists', async (req, res) => {
+  res.set('Access-Control-Allow-Origin', '*');
+  try {
+    const data = await spotify.getPlaylists();
+    if (!data) return res.status(503).json({ error: 'spotify unavailable' });
+    res.json(data);
+  } catch {
+    res.status(503).json({ error: 'spotify unavailable' });
+  }
 });
 
 function safeHandle(socket, fn) {
